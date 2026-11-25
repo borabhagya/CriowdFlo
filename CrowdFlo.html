@@ -1,0 +1,191 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>CrowdFlo – Know the crowd before you board</title>
+<style>
+:root{--bg:#f6f7f4;--sf:#fff;--tx:#14211f;--mu:#5b6a67;--ac:#0b6e99;--bd:#d5dbd8;--wn:#b42318;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1a19;--sf:#16252a;--tx:#e8f0ee;--mu:#9bb0ac;--ac:#5cb8e0;--bd:#2c4146;--wn:#ff8a7a}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 "IBM Plex Sans",system-ui,sans-serif}
+header{background:#0e2f3a;color:#fff;padding:10px 14px}h1{margin:0;font:700 20px "IBM Plex Sans",system-ui}h1 span{color:#ffd23f}.tag{opacity:.8;font-size:12px}
+.syn{background:#ffd23f;color:#111;font-weight:700;text-align:center;font-size:12px;padding:3px}
+nav{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;background:var(--sf);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5}
+button,select,input{font:inherit;color:inherit}button{background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:5px 10px;cursor:pointer}button:hover,button:focus-visible{outline:2px solid var(--ac)}button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+select,input{background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:4px}main{padding:12px;max-width:1150px;margin:auto}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 12px;background:var(--sf);border-bottom:1px solid var(--bd)}.clk{font:700 20px monospace}
+.g{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}.c{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px;overflow-x:auto}.c h3{margin:0 0 6px;font-size:14px}
+.k{display:flex;flex-wrap:wrap;gap:8px}.k div{flex:1;min-width:110px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:8px}.k b{display:block;font-size:22px}.k small{color:var(--mu)}
+table{border-collapse:collapse;width:100%;font-size:12px}td,th{border-bottom:1px solid var(--bd);padding:3px 5px;text-align:left}.ch{width:100%;height:auto}.ax{font-size:9px;fill:var(--mu)}.gl{stroke:var(--bd)}
+.tg{display:inline-block;padding:1px 6px;border-radius:10px;color:#fff;font-size:11px;white-space:nowrap}.rec{border:2px solid var(--ac)}.mu{color:var(--mu)}.al{border-left:4px solid var(--wn);padding:3px 8px;margin:3px 0;background:rgba(180,35,24,.08)}
+.bb{height:10px;background:var(--ac);border-radius:3px}.hm td{padding:0;text-align:center;font-size:8px;min-width:14px;height:18px}label{display:inline-flex;flex-direction:column;font-size:12px;gap:2px;margin:0 8px 6px 0}
+</style></head><body>
+<header><h1>Crowd<span>Flo</span></h1><div class="tag">Know the crowd before you board. · MTC city buses, Chennai (synthetic demonstration network)</div></header>
+<div class="syn">SYNTHETIC SIMULATION — NOT LIVE MTC DATA</div>
+<div class="bar" id="bar"></div><nav id="nav"></nav><main id="app"></main>
+<script id="eng">
+const T0=360,T1=1320,TE=1440;
+const mulb=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const hs=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h};
+const fm=t=>{t=Math.round(t);return String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};
+const g=(t,m,s)=>Math.exp(-(((t-m)/s)**2));
+const prof=(t,c)=>.3+c.am*1.3*g(t,525,70)+c.pm*1.1*g(t,1080,80);
+const ST=['Broadway / Parrys','Chennai Central','Egmore','Anna Salai (Spencer)','Thousand Lights','Chetpet','Teynampet','Nandanam','Saidapet','Guindy','Kilpauk','Ashok Nagar'];
+const XY=[[50,6],[46,20],[34,33],[64,36],[62,50],[28,50],[56,62],[54,74],[42,84],[56,94],[14,38],[28,72]];
+const W=[1.3,1.6,1.2,1.4,.9,.7,1,.8,.8,1.5,.6,.6];
+const RT=[{id:'CF-01',col:'#0b6e99',seq:[0,1,2,3,4,6,7,9],seg:[6,5,8,6,7,7,10],hw:10,off:0,base:.5},
+{id:'CF-02',col:'#d1495b',seq:[0,3,6,9],seg:[14,12,16],hw:15,off:3,base:.35},
+{id:'CF-03',col:'#2e8b57',seq:[1,2,10,5,11,8,9],seg:[5,7,8,9,6,8],hw:12,off:5,base:.4}];
+const LN=[];RT.forEach((r,ri)=>[0,1].forEach(d=>{const seq=d?r.seq.slice().reverse():r.seq,seg=d?r.seg.slice().reverse():r.seg,cum=[0];seg.forEach(s=>cum.push(cum.at(-1)+s));LN.push({ri,d,seq,cum,id:r.id+' → '+ST[seq.at(-1)]})}));
+const XF=LN.map(L=>L.seq.map(s=>LN.map((M,mi)=>[M,mi]).filter(([M])=>M.ri!=L.ri&&M.seq.indexOf(s)>=0&&M.seq.indexOf(s)<M.seq.length-1)));
+const PS={morning:{am:1.3,pm:.8,t:495},evening:{am:.8,pm:1.3,t:1050},off:{am:.2,pm:.2,t:780},event:{am:.8,pm:1,t:1000,surge:{s:3,t0:1020,t1:1110,m:4}},breakdown:{am:1.3,pm:.8,t:480,cancel:[{ri:0,d:0,t0:480,t1:530}]},extra:{am:1.3,pm:.8,t:495,extra:[1,0,0]}};
+const preset=k=>{const p=PS[k];return{seed:7,demand:1,hwMult:1,capBase:65,capMult:1,hw:{},extra:p.extra?p.extra.slice():[0,0,0],cancel:p.cancel?JSON.parse(JSON.stringify(p.cancel)):[],cx:[],surge:p.surge?{...p.surge}:null,am:p.am,pm:p.pm}};
+function mkTrips(c){const o=[],cap=Math.round(c.capBase*c.capMult);LN.forEach((L,li)=>{const r=RT[L.ri],h=Math.max(3,Math.round((c.hw[L.ri]||r.hw)*c.hwMult)),n=1+c.extra[L.ri];for(let j=0;j<n;j++)for(let t=T0+r.off+(L.d?4:0)+Math.round(h*j/n);t<T1;t+=h){const id=r.id+(L.d?'B':'A')+fm(t)+(j?'x':'');const cx=c.cancel.some(k=>k.ri==L.ri&&k.d==L.d&&t>=k.t0&&t<=k.t1)||c.cx.includes(id);const t0=t+hs(id)%3;o.push({id,li,j,cx,cap,t0,ts:L.cum.map(m=>t0+m),ev:[],ob:[]})}});return o}
+function sim(c,seed){const R1=mulb(seed),R2=mulb(seed+99),tr=mkTrips(c),B=Array.from({length:TE+80},()=>[]);
+tr.forEach(x=>{if(!x.cx)x.ts.forEach((t,i)=>B[t].push([x,i]))});
+const Q=LN.map(L=>L.seq.map(()=>({a:[],h:0,n:0})));let gen=0,tQ=0,tO=0,C=0,ws=0,wn=0,left=0;const wh=Array(61).fill(0),rw=RT.map(()=>[0,0]);
+const qs=ST.map(()=>new Int32Array(TE-T0)),ar=new Int32Array(TE-T0),ot=new Int32Array(TE-T0);
+for(let t=T0;t<TE;t++){
+ if(t<T1)LN.forEach((L,li)=>{const r=RT[L.ri],pr=prof(t,c),bi=((t<780)==(L.d==0))?1.3:.8;L.seq.forEach((s,i)=>{if(i==L.seq.length-1)return;
+  let l=r.base*W[s]*pr*bi*c.demand;if(c.surge&&c.surge.s==s&&t>=c.surge.t0&&t<=c.surge.t1)l*=c.surge.m;
+  const n=Math.max(0,Math.round(l+(R1()-.5)*2*Math.sqrt(l)));if(!n)return;
+  const D=L.seq.slice(i+1),ds=D.reduce((a,d)=>a+W[d],0),al=D.map(d=>Math.floor(n*W[d]/ds));let rm=n-al.reduce((a,b)=>a+b,0);while(rm-->0)al[(R1()*D.length)|0]++;
+  const q=Q[li][i];D.forEach((d,k)=>{if(al[k])q.a.push([d,al[k],t])});q.n+=n;gen+=n;tQ+=n;ar[t-T0]+=n})});
+ for(const [x,i] of B[t]){const L=LN[x.li],s=L.seq[i],last=i==L.seq.length-1;let al=0,tf=0;const keep=[];
+  for(const z of x.ob){if(z[0]==s){al+=z[1];const k=Math.floor(z[1]*.12),cd=XF[x.li][i];if(k&&cd.length){const [M,mi]=cd[(R2()*cd.length)|0],p=M.seq.indexOf(s),D=M.seq.slice(p+1),dd=D[(R2()*D.length)|0];Q[mi][p].a.push([dd,k,t]);Q[mi][p].n+=k;tQ+=k;tf+=k}}else keep.push(z)}
+  x.ob=keep;const oa=keep.reduce((a,b)=>a+b[1],0);tO-=al;C+=al-tf;const q=Q[x.li][i],qb=q.n;let bo=0;
+  if(!last){bo=Math.min(x.cap-oa,q.n);let nd=bo;while(nd>0){const h=q.a[q.h],k=Math.min(h[1],nd),w=t-h[2];wh[Math.min(60,w)]+=k;ws+=k*w;wn+=k;rw[L.ri][0]+=k*w;rw[L.ri][1]+=k;const e=x.ob.find(z=>z[0]==h[0]);e?e[1]+=k:x.ob.push([h[0],k]);h[1]-=k;nd-=k;if(!h[1])q.h++}q.n-=bo;tQ-=bo;tO+=bo;left+=q.n}
+  x.ev[i]={t,al,tf,bo,qb,oa,ob:oa+bo,left:last?0:q.n,pb:qb>0?bo/qb:1}}
+ LN.forEach((L,li)=>L.seq.forEach((s,i)=>qs[s][t-T0]+=Q[li][i].n));ot[t-T0]=tO}
+const act=tr.filter(x=>!x.cx),evs=[];act.forEach(x=>x.ev.forEach((e,i)=>{if(i<x.ts.length-1)evs.push([x,e,i])}));
+const lf=([x,e])=>e.ob/x.cap,mx=act.map(x=>Math.max(...x.ev.map(e=>e.ob/x.cap)));
+const st={avgWait:wn?ws/wn:0,maxQ:Math.max(...qs.map(r=>Math.max(...r))),left,avgOcc:evs.length?evs.reduce((a,v)=>a+lf(v),0)/evs.length:0,maxLoad:Math.max(0,...mx),
+ exposure:evs.reduce((a,[x,e,i])=>a+(e.ob/x.cap>=.85?e.ob*(LN[x.li].cum[i+1]-LN[x.li].cum[i]):0),0),over:mx.filter(v=>v>=.9).length,trips:act.length,boarded:wn,
+ busHours:act.reduce((a,x)=>a+LN[x.li].cum.at(-1)/60,0)};st.cost=st.busHours*1500;
+return{c,tr,qs,ar,ot,wh,rw,st,cons:{gen,Q:tQ,O:tO,C},map:new Map(tr.map(x=>[x.id,x]))}}
+const full=c=>({act:sim(c,c.seed),ens:[101,102,103,104,105,106,107,108].map(s=>sim(c,s))});
+const pst=a=>{a=a.slice().sort((p,q)=>p-q);const n=a.length;return{m:a.reduce((p,q)=>p+q,0)/n,lo:a[Math.floor(n*.1)],hi:a[Math.ceil(n*.9)-1]}};
+const PE=(E,x,i,k)=>pst(E.ens.map(e=>e.map.get(x.id).ev[i][k]));
+function bpos(x,t){const n=x.ts.length;if(x.cx||t<x.ts[0]||t>x.ts[n-1])return null;let i=0;while(i<n-1&&x.ts[i+1]<=t)i++;return i==n-1?{i:i-1,f:1,ob:0}:{i,f:(t-x.ts[i])/(x.ts[i+1]-x.ts[i]),ob:x.ev[i].ob}}
+const crowd=l=>l>=.98?['Full','▉▉▉▉▉','#7a1f2b']:l>=.9?['Near capacity','▉▉▉▉▫','#c2410c']:l>=.7?['High','▉▉▉▫▫','#a16207']:l>=.4?['Moderate','▉▉▫▫▫','#4d7c0f']:['Low','▉▫▫▫▫','#0f766e'];
+function plan(E,o,d,dep,pref,tol,wt){const A=E.act,C=[];
+ const nx=(li,s,af,n)=>{const p=LN[li].seq.indexOf(s);return A.tr.filter(x=>x.li==li&&!x.cx&&x.ts[p]>=af).sort((a,b)=>a.ts[p]-b.ts[p]).slice(0,n).map(x=>[x,p])};
+ const lg=(x,i,j)=>{let ml=0;for(let k=i;k<j;k++)ml=Math.max(ml,PE(E,x,k,'ob').m/x.cap);return{x,i,j,dep:x.ts[i],arr:x.ts[j],oa:PE(E,x,i,'oa'),ob:PE(E,x,i,'ob'),pb:PE(E,x,i,'pb').m,ml}};
+ LN.forEach((L,li)=>{const io=L.seq.indexOf(o),id=L.seq.indexOf(d);if(io<0)return;
+  if(id>io)nx(li,o,dep,3).forEach(([x,i])=>C.push([lg(x,i,id)]));
+  L.seq.forEach((xs,jx)=>{if(jx<=io||xs==d)return;LN.forEach((M,mi)=>{if(M.ri==L.ri)return;const p=M.seq.indexOf(xs),q=M.seq.indexOf(d);if(p<0||q<=p)return;nx(li,o,dep,2).forEach(([x,i])=>nx(mi,xs,x.ts[jx]+2,1).forEach(([y,k])=>C.push([lg(x,i,jx),lg(y,k,q)])))})})});
+ let M=C.map(l=>({l,arr:l.at(-1).arr,dur:l.at(-1).arr-dep,wait:l[0].dep-dep+(l[1]?l[1].dep-l[0].arr:0),P:l.reduce((a,b)=>a*b.pb,1),ml:Math.max(...l.map(z=>z.ml)),tr:l.length-1}));
+ if(!M.length)return{M:[]};const ea=Math.min(...M.map(m=>m.arr)),w0=Math.min(...M.map(m=>m.wait));
+ M.forEach(m=>{const pen=(m.ml>tol?1e3:0)+(m.wait-w0>wt?1e3:0);m.sc=pen+({ear:m.arr,low:m.ml*1e3+m.arr,rel:(1-m.P)*1e3+m.arr,bal:m.arr+40*m.ml+60*(1-m.P)}[pref])});
+ M.sort((a,b)=>a.sc-b.sc);const seen=new Set();M=M.filter(m=>{const k=m.l.map(z=>z.x.id).join('>');return seen.has(k)?0:seen.add(k)}).slice(0,4);
+ return{M,ear:M.slice().sort((a,b)=>a.arr-b.arr)[0]}}
+</script>
+<script id="tst">
+const TESTS=[];const tt=(n,f)=>TESTS.push([n,f]);const ok=(c,m)=>{if(!c)throw new Error(m||'assert')};
+const B0=()=>preset('morning'),r0=()=>sim(B0(),7);
+tt('Passenger conservation (gen = queued+onboard+completed)',()=>{const r=r0();ok(r.cons.gen==r.cons.Q+r.cons.O+r.cons.C,JSON.stringify(r.cons));ok(r.cons.O==0,'onboard at end')});
+tt('Capacity, boarding & alighting consistency',()=>{const r=r0();for(const x of r.tr)for(const e of x.ev){if(!e)continue;ok(e.ob<=x.cap&&e.bo<=x.cap-e.oa&&e.oa>=0&&e.al>=0&&e.bo>=0)}});
+tt('Queues never negative',()=>{ok(r0().qs.every(a=>a.every(v=>v>=0)))});
+tt('Route sequence validity',()=>{RT.forEach(r=>{ok(new Set(r.seq).size==r.seq.length&&r.seg.length==r.seq.length-1&&r.seg.every(s=>s>0))});ok(RT.every(r=>r.seq.every(s=>s<ST.length)));[0,1,2,3,9].forEach(a=>ok(a<ST.length))});
+tt('Vehicle movement monotonic',()=>{r0().tr.forEach(x=>x.ts.forEach((t,i)=>ok(i==0||t>x.ts[i-1])))});
+tt('Transfer feasibility (Kilpauk→Anna Salai)',()=>{const E=full(B0()),p=plan(E,10,3,495,'ear',1,60);const t=p.M.find(m=>m.tr==1);ok(t&&t.l[0].arr+2<=t.l[1].dep&&t.l[0].x.li!=t.l[1].x.li)});
+tt('Journey recommendations (Broadway→Guindy 08:15)',()=>{const E=full(B0()),p=plan(E,0,9,495,'bal',.9,10);ok(p.M.length>=2);p.M.forEach(m=>{ok(m.l.at(-1).j>m.l[0].i||m.tr==1);ok(m.P>=0&&m.P<=1)})});
+tt('Cancellation removes trips and raises downstream load',()=>{const c=preset('breakdown'),a=sim(c,7),b=r0();ok(a.tr.some(x=>x.cx)&&a.tr.filter(x=>x.cx).every(x=>x.ev.length==0));ok(a.st.maxQ>=b.st.maxQ)});
+tt('Demand surge raises stop queue',()=>{const a=sim(preset('event'),7),b=sim({...preset('event'),surge:null},7);ok(Math.max(...a.qs[3])>Math.max(...b.qs[3]))});
+tt('Deterministic replay',()=>{ok(JSON.stringify(sim(B0(),7).st)==JSON.stringify(sim(B0(),7).st))});
+tt('Reset restores baseline',()=>{const c=B0();c.demand=2;c.cx.push('x');ok(JSON.stringify(preset('morning'))==JSON.stringify(B0()))});
+tt('Additional bus adds fleet; identical demand',()=>{const a=r0(),b=sim(preset('extra'),7);ok(b.st.trips>a.st.trips&&a.cons.gen==b.cons.gen)});
+tt('Baseline vs intervention (not assumed better everywhere)',()=>{const a=r0(),b=sim(preset('extra'),7);ok(b.st.busHours>a.st.busHours&&b.st.avgWait<=a.st.avgWait+1e-9)});
+function runTests(){return TESTS.map(([n,f])=>{try{f();return[n,1,'']}catch(e){return[n,0,e.message]}})}
+</script>
+<script>
+const $=s=>document.querySelector(s),pc=v=>Math.round(v*100)+'%',r1=v=>Math.round(v*10)/10;
+let S={tab:'plan',t:495,play:0,sp:5,sc:'morning',cfg:preset('morning'),sel:3,bus:null,pl:{o:0,d:9,dep:495,pref:'bal',tol:.9,wt:10},hl:[],iv:{ri:0,mode:'bus',v:1},ln:0},CK='',CV=null,IK='',IV=null,TM=null;
+const E=()=>{const k=JSON.stringify(S.cfg);if(k!=CK){CK=k;CV=full(S.cfg)}return CV};
+const tag=l=>{const c=crowd(l);return`<span class=tg style="background:${c[2]}" title="Load factor ${pc(l)}">${c[1]} ${c[0]}</span>`};
+const opts=(a,v)=>a.map((x,i)=>`<option value=${Array.isArray(x)?x[0]:i} ${(Array.isArray(x)?x[0]:i)==v?'selected':''}>${Array.isArray(x)?x[1]:x}</option>`).join('');
+const stopOpts=v=>opts(ST.map((s,i)=>[i,s]),v);
+function LC(se,o){const w=560,h=o.h||165,p=30,ym=Math.max(1,...se.flatMap(s=>s.p.map(a=>a[1]).concat((s.b||[]).map(a=>a[2]))))*1.08,X=x=>p+(x-o.x0)/(o.x1-o.x0)*(w-p-6),Y=y=>h-16-y/ym*(h-28);
+let s=`<svg viewBox="0 0 ${w} ${h}" class=ch role=img aria-label="${o.t}">`;
+[0,.5,1].forEach(f=>s+=`<line x1=${p} x2=${w-6} y1=${Y(ym*f)} y2=${Y(ym*f)} class=gl /><text x=${p-3} y=${Y(ym*f)+3} class=ax text-anchor=end>${Math.round(ym*f)}</text>`);
+for(let k=0;k<=4;k++){const v=o.x0+(o.x1-o.x0)*k/4;s+=`<text x=${X(v)} y=${h-3} class=ax text-anchor=middle>${fm(v)}</text>`}
+se.forEach((a,k)=>{if(a.b&&a.b.length)s+=`<path d="M${a.b.map(q=>X(q[0])+','+Y(q[2])).join('L')}L${a.b.slice().reverse().map(q=>X(q[0])+','+Y(q[1])).join('L')}Z" fill="${a.c}" opacity=.2 />`;
+ s+=`<polyline fill=none stroke="${a.c}" stroke-width=2 ${a.d?'stroke-dasharray="5 3"':''} points="${a.p.map(q=>X(q[0])+','+Y(q[1])).join(' ')}"/>`;a.p.forEach((q,j)=>{if(j%3==0)s+=`<circle cx=${X(q[0])} cy=${Y(q[1])} r=5 fill=transparent><title>${a.n} ${fm(q[0])}: ${r1(q[1])} ${o.u}</title></circle>`});s+=`<text x=${p+6+k*125} y=10 fill="${a.c}" class=ax>■ ${a.n}</text>`});
+if(o.now>=o.x0&&o.now<=o.x1)s+=`<line x1=${X(o.now)} x2=${X(o.now)} y1=12 y2=${h-16} stroke="#d97706" stroke-dasharray="3 3"/>`;
+return s+`<text x=${w-4} y=10 class=ax text-anchor=end>${o.u}</text></svg>`}
+const bars=(a,u)=>{const m=Math.max(1e-9,...a.map(x=>x.v));return a.map(x=>`<div title="${x.l}: ${r1(x.v)} ${u}" style="display:flex;gap:6px;align-items:center;margin:2px 0"><span style="width:130px;font-size:12px">${x.l}</span><div class=bb style="width:${x.v/m*60}%;background:${x.c||'var(--ac)'}"></div><b style="font-size:12px">${r1(x.v)} ${u}</b></div>`).join('')};
+function nextArr(e,s,t,n){const out=[];LN.forEach((L,li)=>{const p=L.seq.indexOf(s);if(p<0||p==L.seq.length-1)return;e.act.tr.filter(x=>x.li==li&&!x.cx&&x.ts[p]>=t).sort((a,b)=>a.ts[p]-b.ts[p]).slice(0,n).forEach(x=>out.push([x,p]))});return out.sort((a,b)=>a[0].ts[a[1]]-b[0].ts[b[1]])}
+const qAt=(r,s,t)=>r.qs[s][Math.min(TE-T0-1,Math.max(0,Math.round(t)-T0))];
+const qF=(e,s,t)=>pst(e.ens.map(r=>qAt(r,s,t)));
+function bar(){$('#bar').innerHTML=`<span class=clk aria-live=polite>${fm(S.t)}</span><button onclick="X.pp()">${S.play?'⏸ Pause':'▶ Play'}</button><button onclick="X.step()">Step +5m</button><button onclick="X.reset()">Reset</button><label>Speed<select onchange="S.sp=+this.value">${opts([[1,'1 min/tick'],[5,'5 min/tick'],[15,'15 min/tick']],S.sp)}</select></label><label>Scenario<select onchange="X.sc(this.value)">${opts([['morning','A Morning peak'],['evening','B Evening peak'],['off','C Off-peak'],['event','D Event surge'],['breakdown','E Bus breakdown'],['extra','F Additional bus']],S.sc)}</select></label><input type=range min=${T0} max=${T1} value=${S.t} aria-label="Simulation clock" oninput="S.t=+this.value;X.draw()">`;
+$('#nav').innerHTML=[['plan','Passenger planner'],['map','Network map'],['ops','Operations'],['ctl','Control centre'],['iv','Interventions'],['me','Methods'],['ts','Tests']].map(([k,l])=>`<button class="${S.tab==k?'on':''}" onclick="S.tab='${k}';X.draw()">${l}</button>`).join('')}
+const V={
+plan(){const e=E(),p=S.pl,r=plan(e,p.o,p.d,p.dep,p.pref,p.tol,p.wt);S.hl=r.M[0]?r.M[0].l.flatMap(z=>LN[z.x.li].seq.slice(z.i,z.j+1)):[];
+let h=`<div class=c><h3>Plan a journey (synthetic network)</h3><label>From<select onchange="S.pl.o=+this.value;X.draw()">${stopOpts(p.o)}</select></label><label>To<select onchange="S.pl.d=+this.value;X.draw()">${stopOpts(p.d)}</select></label><label>Depart<input type=time value=${fm(p.dep)} onchange="X.dep(this.value)"></label><label>Preference<select onchange="S.pl.pref=this.value;X.draw()">${opts([['ear','Earliest arrival'],['low','Least crowded'],['rel','Highest boarding reliability'],['bal','Balanced']],p.pref)}</select></label><label>Crowding tolerance<select onchange="S.pl.tol=+this.value;X.draw()">${opts([[.7,'Low (≤70% load)'],[.9,'Moderate (≤90%)'],[1.01,'Any']],p.tol)}</select></label><label>Willing to wait extra<select onchange="S.pl.wt=+this.value;X.draw()">${opts([[0,'0 min'],[5,'5 min'],[10,'10 min'],[20,'20 min']],p.wt)}</select></label><button onclick="S.pl.dep=S.t;X.draw()">Use simulation clock</button></div>`;
+if(!r.M.length)return h+`<div class=c>No feasible journey in the network after ${fm(p.dep)} for this pair.</div>`;
+const m0=r.M[0],e0=r.ear,a=e0.l[0],b=m0.l[0],rn=z=>RT[LN[z.x.li].ri].id;
+const why=m0.arr==e0.arr&&m0.l[0].x==e0.l[0].x?`The ${fm(b.dep)} ${rn(b)} service reaches your destination first (${fm(m0.arr)}) and is predicted at ${pc(b.oa.m/b.x.cap)} load (${Math.round(b.oa.m)}/${b.x.cap}) at ${ST[p.o]}, with an estimated boarding probability of ${pc(b.pb)}. No alternative scores better for your preference.`:`The ${fm(a.dep)} ${rn(a)} service gives the earliest arrival (${fm(e0.arr)}) but is predicted at ${pc(a.oa.m/a.x.cap)} load at your stop (model-estimated boarding probability ${pc(e0.P)}). The ${fm(b.dep)} ${rn(b)} option is predicted at ${pc(b.oa.m/b.x.cap)} load with boarding probability ${pc(m0.P)}; waiting ${Math.round(Math.abs(b.dep-a.dep))} min ${b.dep>a.dep?'longer':'less'} moves arrival ${m0.arr>=e0.arr?'later':'earlier'} by ${Math.abs(Math.round(m0.arr-e0.arr))} min and peak load on board to ${pc(m0.ml)}.`;
+h+=`<div class="c rec"><h3>Recommendation</h3>${why}<div class=mu style="font-size:12px;margin-top:4px">Probabilities are model-estimated from an 8-seed Monte-Carlo ensemble of the synthetic simulation — not validated real-world probabilities.</div></div>`;
+r.M.forEach((m,k)=>{h+=`<div class="c ${k?'':'rec'}"><h3>${k?'Alternative '+k:'Recommended'}: arrive ${fm(m.arr)} · ${Math.round(m.dur)} min total · wait ${Math.round(m.wait)} min · ${m.tr} transfer${m.tr==1?'':'s'} · P(board all legs) ≈ ${pc(m.P)} ${tag(m.ml)}</h3><table><tr><th>Route</th><th>From → To</th><th>Bus time</th><th>Predicted onboard at boarding stop</th><th>P(board)</th><th>Peak load on ride</th></tr>`+m.l.map(z=>`<tr><td>${LN[z.x.li].id}</td><td>${ST[LN[z.x.li].seq[z.i]]} → ${ST[LN[z.x.li].seq[z.j]]}</td><td>${fm(z.dep)} → ${fm(z.arr)}</td><td>${Math.round(z.oa.m)} / ${z.x.cap} (${pc(z.oa.m/z.x.cap)}; p10–p90 ${z.oa.lo}–${z.oa.hi})</td><td>${pc(z.pb)}</td><td>${tag(z.ml)}</td></tr>`).join('')+'</table></div>'});return h},
+map(){const e=E(),t=S.t;let s=`<svg viewBox="0 0 100 100" style="width:100%;max-width:640px" role=img aria-label="Schematic network map"><rect width=100 height=100 fill=none stroke="var(--bd)"/>`;
+RT.forEach((r,ri)=>s+=`<polyline fill=none stroke="${r.col}" stroke-width=1.1 opacity=.8 points="${r.seq.map(i=>(XY[i][0]+ri*1.2)+','+XY[i][1]).join(' ')}"/>`);
+if(S.hl.length)s+=`<polyline fill=none stroke="#ffd23f" stroke-width=2.6 opacity=.6 points="${S.hl.map(i=>XY[i][0]+','+XY[i][1]).join(' ')}"/>`;
+ST.forEach((n,i)=>{const q=qAt(e.act,i,t),xf=RT.filter(r=>r.seq.includes(i)).length>1;s+=`<g data-a=stop data-v=${i} style="cursor:pointer" tabindex=0><circle cx=${XY[i][0]} cy=${XY[i][1]} r=${1.8+Math.min(4,q/25)} fill=${q>=40?'#c2410c':q>=20?'#d97706':'#fff'} stroke="#14211f" stroke-width=${xf?.9:.5} opacity=${S.sel==i?1:.85}><title>${n}: ${q} waiting</title></circle><text x=${XY[i][0]+3} y=${XY[i][1]+1} font-size=2.4 fill="var(--tx)">${n}${xf?' ⇄':''} (${q})</text></g>`});
+e.act.tr.forEach(x=>{const b=bpos(x,t);if(!b)return;const L=LN[x.li],a=XY[L.seq[b.i]],z=XY[L.seq[b.i+1]],px=a[0]+(z[0]-a[0])*b.f+LN[x.li].ri*1.2,py=a[1]+(z[1]-a[1])*b.f;s+=`<rect data-a=bus data-v="${x.id}" x=${px-1.3} y=${py-1.3} width=2.6 height=2.6 fill="${crowd(b.ob/x.cap)[2]}" stroke="${RT[L.ri].col}" stroke-width=.7 style="cursor:pointer"><title>${x.id} ${b.ob}/${x.cap}</title></rect>`});s+='</svg>';
+const sp=stopPanel(e),bp=S.bus?busPanel(e):'';
+return`<div class=g><div class=c><h3>Schematic network (not geographically accurate) · ■ bus coloured by load · circle size = queue · yellow = selected journey</h3>${s}<div style="font-size:12px">${RT.map(r=>`<span style="color:${r.col}">━ ${r.id}</span>`).join(' · ')} · ⇄ transfer node</div></div><div>${sp}${bp}</div></div>`},
+ops(){const e=E(),r=e.act,t=S.t,k=t-T0,act=r.tr.filter(x=>bpos(x,t)),over=act.filter(x=>bpos(x,t).ob/x.cap>=.9),wt=ST.reduce((a,_,i)=>a+qAt(r,i,t),0),aff=ST.map((_,i)=>i).filter(i=>qAt(r,i,t)>=30);
+const al=[];r.tr.forEach(x=>{if(x.cx&&x.ts[0]>=t-10&&x.ts[0]<=t+30){const n=nextArr(e,LN[x.li].seq[0],x.ts[0]+1,1).filter(z=>z[0].li==x.li)[0];al.push(`Cancelled ${x.id} (dep ${fm(x.ts[0])}) may cause downstream overcrowding${n?`; next service ${n[0].id} predicted ${pc(PE(e,n[0],n[1],'ob').m/n[0].cap)} full`:''}.`)}
+ if(!x.cx)x.ts.forEach((ts,i)=>{if(i<x.ts.length-1&&ts>=t&&ts<=t+30){const o=PE(e,x,i,'ob'),l=PE(e,x,i,'left');if(o.m/x.cap>=.9)al.push(`${x.id} likely to reach capacity at ${ST[LN[x.li].seq[i]]} ${fm(ts)} (predicted ${pc(o.m/x.cap)}).`);if(l.m>=8)al.push(`≈${Math.round(l.m)} passengers expected to be left behind at ${ST[LN[x.li].seq[i]]} by ${x.id} (${fm(ts)}).`)}})});
+ST.forEach((n,i)=>{const q=qAt(r,i,t),q0=qAt(r,i,t-10);if(q>=40&&q-q0>=15)al.push(`Queue at ${n} rising rapidly: ${q0} → ${q} in 10 min.`);const f=qF(e,i,t+30);if(f.m>=60)al.push(`Demand exceeds capacity at ${n}: forecast queue ≈${Math.round(f.m)} at ${fm(t+30)}.`)});
+const rs=RT.map((R,ri)=>{const ev=r.tr.filter(x=>!x.cx&&LN[x.li].ri==ri).flatMap(x=>x.ev.map((v,i)=>[x,v,i]).filter(z=>z[2]<x.ts.length-1)),lfs=ev.map(([x,v])=>v.ob/x.cap),w=r.rw[ri];
+ const gaps=[0,1].flatMap(d=>{const a=r.tr.filter(x=>!x.cx&&x.li==ri*2+d&&x.j==0).map(x=>x.ts[0]);return a.slice(1).map((v,i)=>v-a[i])}),mg=gaps.reduce((a,b)=>a+b,0)/gaps.length,cv=Math.sqrt(gaps.reduce((a,b)=>a+(b-mg)**2,0)/gaps.length)/mg;
+ return{R,ri,lf:lfs.reduce((a,b)=>a+b,0)/lfs.length,w:w[1]?w[0]/w[1]:0,pax:w[1],dist:[0,.4,.7,.9].map((lo,j)=>lfs.filter(v=>v>=lo&&v<[.4,.7,.9,9][j]).length),cv,att:lfs.filter(v=>v>=.9).length}});
+const sn=S.sel,sq=[{n:'Simulated',c:'#0b6e99',p:[]},{n:'Forecast mean',c:'#d1495b',d:1,p:[],b:[]}];for(let u=T0;u<=T1;u+=5){sq[0].p.push([u,qAt(r,sn,u)]);if(u>=t&&u<=t+60){const f=qF(e,sn,u);sq[1].p.push([u,f.m]);sq[1].b.push([u,f.lo,f.hi])}}
+const dm=[{n:'Arrivals / 15 min',c:'#0b6e99',p:[]}];for(let u=T0;u<T1;u+=15){let a=0;for(let j=0;j<15;j++)a+=r.ar[u-T0+j];dm[0].p.push([u,a])}
+const li=S.ln,oc=r.tr.filter(x=>x.li==li&&!x.cx&&x.ts.at(-1)>=t).sort((a,b)=>a.ts[0]-b.ts[0]).slice(0,4).map((x,j)=>({n:x.id,c:['#0b6e99','#d1495b','#2e8b57','#7c3aed'][j],p:x.ts.map((u,i)=>[u,x.ev[i].ob/x.cap*100])}));
+const hist=[[0,2,'0–2'],[3,5,'3–5'],[6,10,'6–10'],[11,20,'11–20'],[21,60,'21+']].map(([a,b,l])=>({l:l+' min',v:r.wh.slice(a,b+1).reduce((x,y)=>x+y,0)}));
+let hm='<table class=hm><tr><th></th>';for(let u=T0;u<T1;u+=30)hm+=`<th>${fm(u).slice(0,2)}</th>`;hm+='</tr>';const mq=Math.max(1,r.st.maxQ);ST.forEach((n,i)=>{hm+=`<tr><th style="font-size:10px;white-space:nowrap">${n}</th>`;for(let u=T0;u<T1;u+=30){const q=qAt(r,i,u);hm+=`<td title="${n} ${fm(u)}: ${q} waiting" style="background:rgba(194,65,12,${q/mq})">${q||''}</td>`}hm+='</tr>'});hm+='</table>';
+return`<div class=k><div><b>${act.length}</b><small>active buses</small></div><div><b>${r.ot[k]}</b><small>passengers onboard</small></div><div><b>${wt}</b><small>passengers waiting</small></div><div><b>${over.length}</b><small>services ≥90% load</small></div><div><b>${aff.length}</b><small>stops ≥30 waiting</small></div><div><b>${rs.filter(x=>x.att).map(x=>x.R.id).join(', ')||'None'}</b><small>routes needing attention (trips ≥90%)</small></div></div>
+<div class=g style="margin-top:12px"><div class=c><h3>Alerts (model-derived) at ${fm(t)}</h3>${al.slice(0,8).map(a=>`<div class=al>⚠ ${a}</div>`).join('')||'<span class=mu>No alerts in the next 30 minutes.</span>'}</div>
+<div class=c><h3>Route intelligence (full simulated day)</h3><table><tr><th>Route</th><th>Pax boarded</th><th>Avg load</th><th>Avg wait</th><th>Crowding Low/Mod/High/Near+ (stop-legs)</th><th>Headway CV</th></tr>${rs.map(x=>`<tr><td>${x.R.id}</td><td>${x.pax}</td><td>${pc(x.lf)}</td><td>${r1(x.w)} min</td><td>${x.dist.join(' / ')}</td><td>${r1(x.cv)}</td></tr>`).join('')}</table></div>
+<div class=c><h3>Passenger demand over time</h3>${LC(dm,{t:'Demand',u:'pax/15min',x0:T0,x1:T1,now:t})}</div>
+<div class=c><h3>Queue at <select onchange="S.sel=+this.value;X.draw()">${stopOpts(sn)}</select>: simulated vs forecast (next 60 min, p10–p90)</h3>${LC(sq,{t:'Queue',u:'pax',x0:T0,x1:T1,now:t})}</div>
+<div class=c><h3>Vehicle occupancy trajectories <select onchange="S.ln=+this.value;X.draw()">${opts(LN.map(l=>l.id),li)}</select></h3>${LC(oc,{t:'Occupancy',u:'% load',x0:t-15,x1:t+90,now:t})}</div>
+<div class=c><h3>Passenger waiting-time distribution</h3>${bars(hist,'pax')}</div>
+<div class=c><h3>Route comparison: average load</h3>${bars(rs.map(x=>({l:x.R.id,v:x.lf*100,c:x.R.col})),'%')}${bars(rs.map(x=>({l:x.R.id+' wait',v:x.w,c:x.R.col})),'min')}</div></div>
+<div class=c style="margin-top:12px"><h3>Stop crowding heatmap (waiting passengers by 30-min slot; hour on header)</h3>${hm}</div>
+<div class=c style="margin-top:12px"><h3>Stop intelligence</h3><table><tr><th>Stop</th><th>Queue now</th><th>Forecast +15 / +30 (p10–p90)</th><th>Next services (pred. load · P(board))</th></tr>${ST.map((n,i)=>{const f1=qF(e,i,t+15),f2=qF(e,i,t+30),q=qAt(r,i,t);return`<tr><td>${n}</td><td>${q} ${tag(Math.min(1,q/60))}</td><td>${Math.round(f1.m)} (${f1.lo}–${f1.hi}) / ${Math.round(f2.m)} (${f2.lo}–${f2.hi})</td><td>${nextArr(e,i,t,1).slice(0,3).map(([x,p])=>`${RT[LN[x.li].ri].id} ${fm(x.ts[p])} ${pc(PE(e,x,p,'ob').m/x.cap)}·${pc(PE(e,x,p,'pb').m)}`).join('<br>')}</td></tr>`}).join('')}</table></div>`},
+ctl(){const c=S.cfg,e=E();return`<div class=c><h3>Simulation controls (every change recalculates the whole simulation)</h3>
+<label>Passenger demand ×${c.demand}<input type=range min=.5 max=2 step=.1 value=${c.demand} oninput="X.cf('demand',+this.value)"></label>
+<label>Headway ×${c.hwMult} (lower = more frequent)<input type=range min=.5 max=2 step=.1 value=${c.hwMult} oninput="X.cf('hwMult',+this.value)"></label>
+<label>Bus capacity ×${c.capMult} (${Math.round(c.capBase*c.capMult)} pax)<input type=range min=.7 max=1.5 step=.05 value=${c.capMult} oninput="X.cf('capMult',+this.value)"></label>
+<hr><label>Demand surge at stop<select id=ss>${stopOpts(S.sel)}</select></label><button onclick="X.surge()">Trigger ×4 surge (clock → +90 min)</button>
+<hr><label>Cancel next 3 buses on<select id=cl>${opts(LN.map(l=>l.id),S.ln)}</select></label><button onclick="X.cancel()">Cancel / breakdown</button>
+<hr><label>Add bus to route<select id=ab>${opts(RT.map(r=>r.id),0)}</select></label><button onclick="X.add()">Deploy additional bus</button> <span class=mu>Extra buses now: ${c.extra.join(' / ')} · Cancelled: ${e.act.tr.filter(x=>x.cx).length} trips</span></div>`},
+iv(){const c=S.cfg,v=S.iv,k=JSON.stringify([c,v]);if(k!=IK){IK=k;const d={...c,hw:{...c.hw},extra:c.extra.slice(),cancel:c.cancel,cx:c.cx};if(v.mode=='bus')d.extra[v.ri]+=v.v;else if(v.mode=='hw')d.hw[v.ri]=v.v/ d.hwMult;else d.capMult=c.capMult*v.v;IV=sim(d,c.seed)}
+const a=E().act.st,b=IV.st,R=[['Avg waiting time','avgWait','min',1],['Max stop queue','maxQ','pax',1],['Left-behind events','left','pax-bus',1],['Avg vehicle occupancy','avgOcc','',1,1],['Max load factor','maxLoad','',1,1],['Crowding exposure (≥85% load)','exposure','pax·min',1],['Overcrowded services (≥90%)','over','',1],['Trips operated','trips','',0],['Bus-hours','busHours','h',0],['Illustrative cost @₹1,500/bus-h (assumption)','cost','₹',0]];
+const rows=R.map(([l,k,u,lb,p])=>{const d=b[k]-a[k],f=x=>p?pc(x):Math.round(x*10)/10;return`<tr><td>${l}</td><td>${f(a[k])}</td><td>${f(b[k])}</td><td>${d>0?'+':''}${p?r1(d*100)+' pp':r1(d)} ${p?'':u}</td><td>${a[k]?(d>0?'+':'')+r1(d/a[k]*100)+'%':'n/a'}</td><td>${Math.abs(d)<1e-9?'no change':lb?(d<0?'▼ better':'▲ worse'):'resource'}</td></tr>`}).join('');
+const sv=(a.avgWait-b.avgWait)*a.boarded,dc=b.cost-a.cost,ser=[{n:'Baseline',c:'#0b6e99',p:[]},{n:'Intervention',c:'#d1495b',p:[]}];for(let u=T0;u<=T1;u+=10){ser[0].p.push([u,Math.max(...ST.map((_,i)=>qAt(E().act,i,u)))]);ser[1].p.push([u,Math.max(...ST.map((_,i)=>qAt(IV,i,u)))])}
+return`<div class=c><h3>Intervention sandbox (same demand & seed ${c.seed})</h3><label>Route<select onchange="S.iv.ri=+this.value;X.draw()">${opts(RT.map(r=>r.id),v.ri)}</select></label><label>Intervention<select onchange="S.iv.mode=this.value;S.iv.v=this.value=='bus'?1:this.value=='hw'?8:1.2;X.draw()">${opts([['bus','Add buses'],['hw','Set headway (min)'],['cap','Scale capacity ×']],v.mode)}</select></label><label>Value<input type=number step=${v.mode=='cap'?.1:1} min=1 value=${v.v} onchange="S.iv.v=+this.value;X.draw()"></label></div>
+<div class=c style="margin-top:12px"><table><tr><th>Metric</th><th>Baseline (current)</th><th>Intervention</th><th>Δ abs</th><th>Δ %</th><th>Verdict</th></tr>${rows}</table><p><b>Trade-off:</b> ${sv>0?`Intervention saves ≈${Math.round(sv)} passenger-wait-minutes`:sv<0?`Intervention adds ≈${Math.round(-sv)} passenger-wait-minutes`:'No change in waiting time'} for ${dc>=0?'+':''}${Math.round(dc).toLocaleString()} ₹ illustrative operating cost (${b.trips-a.trips>=0?'+':''}${b.trips-a.trips} trips)${dc>0&&sv>0?` ≈ ₹${Math.round(dc/sv)} per wait-minute saved`:''}. ${b.over>=a.over&&b.left>=a.left?'Crowding metrics did not improve — added capacity is not aligned with where/when demand peaks.':'Benefits are concentrated where capacity was added; check other routes and metrics above.'}</p></div>
+<div class=c style="margin-top:12px"><h3>Max stop queue over the day</h3>${LC(ser,{t:'Queue',u:'pax',x0:T0,x1:T1,now:S.t})}</div>`},
+me(){return`<div class=c><h3>Methods, assumptions and limitations</h3><ol>
+<li><b>Why MTC buses / central Chennai:</b> city buses carry most public-transport trips and crowding is visible to riders; the five anchors (Broadway/Parrys, Chennai Central, Egmore, Anna Salai, Guindy) form a dense interchange corridor.</li>
+<li><b>Network:</b> three synthetic routes (CF-01 trunk, CF-02 limited-stop, CF-03 cross-link), 12 stops, both directions, transfer nodes where routes share stops. Not official MTC routes, stop lists or timetables. The map is schematic.</li>
+<li><b>Demand:</b> per stop-line per minute λ = route base × stop weight × time-of-day profile (AM peak 08:45, PM peak 18:00) × direction bias × scenario × surge; arrivals = round(λ ± √λ noise) from a seeded RNG; destinations split by stop weights downstream.</li>
+<li><b>Boarding/alighting:</b> discrete-time (1 min). Alight at destination (12% transfer to another route at shared stops → transfer arrivals); board FIFO up to capacity; the rest stay queued. Onboard_next = Onboard − Alight + Board; Board ≤ Capacity − Onboard; Queue_next = Queue + Arrivals + Transfers − Board.</li>
+<li><b>Load factor</b> = onboard / capacity (default 65, an assumption). Low &lt;40%, Moderate 40–70%, High 70–90%, Near capacity 90–98%, Full ≥98%; shown with colour, bars and text.</li>
+<li><b>Forecast:</b> Monte-Carlo ensemble of 8 seeded runs of the same demand model; mean and p10–p90 are shown. It is not a trained ML model and is not conditioned on live observations. “Simulated” is one seed (7), so forecast vs simulated differences reflect demand variability only.</li>
+<li><b>Boarding probability:</b> ensemble mean of boarded ÷ queue present when the bus departs the stop (FIFO approximation); multi-leg = product. Model-estimated, not validated.</li>
+<li><b>Interventions:</b> re-run with identical seed/demand. Cost uses an illustrative ₹1,500 per bus-hour. Not every metric improves.</li>
+<li><b>Limits:</b> no traffic model (only 0–2 min per-trip jitter and cancellations), no platform capacity, fixed 12% transfer rate, no passenger route choice, no fares, no real data.</li>
+<li><b>For real deployment:</b> GTFS static (if published), GTFS-Realtime / vehicle GPS, automatic passenger counters, ticketing (ETM) records, manual boarding/alighting counts to calibrate and validate. <b>None of these are connected here.</b></li></ol></div>`},
+ts(){const r=runTests();return`<div class=c><h3>In-browser test suite (${r.filter(x=>x[1]).length}/${r.length} passing, executed now)</h3><table>${r.map(x=>`<tr><td>${x[1]?'✔ PASS':'✘ FAIL'}</td><td>${x[0]}</td><td>${x[2]}</td></tr>`).join('')}</table></div>`}};
+function stopPanel(e){const s=S.sel,t=S.t,q=qAt(e.act,s,t),f1=qF(e,s,t+15),f2=qF(e,s,t+30);return`<div class=c><h3>${ST[s]}</h3>Routes: ${RT.filter(r=>r.seq.includes(s)).map(r=>r.id).join(', ')}<br>Queue now: <b>${q}</b> ${tag(Math.min(1,q/60))} (stop crowding = queue/60)<br>Forecast +15 min: ${Math.round(f1.m)} (${f1.lo}–${f1.hi}), +30 min: ${Math.round(f2.m)} (${f2.lo}–${f2.hi})<table><tr><th>Next bus</th><th>Time</th><th>Pred. load</th><th>P(board)</th></tr>${nextArr(e,s,t,2).map(([x,p])=>`<tr><td>${x.id}</td><td>${fm(x.ts[p])}</td><td>${tag(PE(e,x,p,'ob').m/x.cap)}</td><td>${pc(PE(e,x,p,'pb').m)}</td></tr>`).join('')}</table></div>`}
+function busPanel(e){const x=e.act.map.get(S.bus);if(!x)return'';const b=bpos(x,S.t),L=LN[x.li];return`<div class=c><h3>Bus ${x.id}</h3>${L.id}${x.cx?' · CANCELLED':''}<br>${b?`Between ${ST[L.seq[b.i]]} and <b>${ST[L.seq[b.i+1]]}</b><br>Onboard ${b.ob}/${x.cap} ${tag(b.ob/x.cap)}`:'Not currently running'}<table><tr><th>Stop</th><th>Time</th><th>Predicted onboard (p10–p90)</th></tr>${x.cx?'':L.seq.slice(0,-1).map((s,i)=>{const p=PE(e,x,i,'ob');return`<tr><td>${ST[s]}</td><td>${fm(x.ts[i])}</td><td>${Math.round(p.m)}/${x.cap} (${p.lo}–${p.hi})</td></tr>`}).join('')}</table></div>`}
+const X={draw(){bar();$('#app').innerHTML=V[S.tab]()},
+pp(){S.play=!S.play;clearInterval(TM);if(S.play)TM=setInterval(()=>{S.t+=S.sp;if(S.t>=T1){S.t=T1;S.play=0;clearInterval(TM)}X.draw()},700);X.draw()},
+step(){S.t=Math.min(T1,S.t+5);X.draw()},sc(k){S.sc=k;S.cfg=preset(k);S.t=PS[k].t;S.pl.dep=S.t;X.draw()},reset(){X.sc(S.sc)},
+cf(k,v){S.cfg[k]=v;X.draw()},dep(v){const[h,m]=v.split(':');S.pl.dep=+h*60+ +m;X.draw()},
+surge(){S.cfg.surge={s:+$('#ss').value,t0:S.t,t1:S.t+90,m:4};X.draw()},
+cancel(){const li=+$('#cl').value;E().act.tr.filter(x=>x.li==li&&!x.cx&&x.ts[0]>=S.t).sort((a,b)=>a.ts[0]-b.ts[0]).slice(0,3).forEach(x=>S.cfg.cx.push(x.id));X.draw()},
+add(){S.cfg.extra[+$('#ab').value]++;X.draw()}};
+document.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!a)return;if(a.dataset.a=='stop')S.sel=+a.dataset.v;else S.bus=a.dataset.v;X.draw()});
+X.draw();
+</script></body></html>
